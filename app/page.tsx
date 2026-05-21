@@ -1,4 +1,4 @@
-import StackMapCanvas from '@/components/StackMapCanvas';
+import StackMapCanvas from '../components/StackMapCanvas';
 
 export default function Home() {
   return (
