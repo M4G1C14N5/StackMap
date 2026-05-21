@@ -12,8 +12,8 @@
     "@xyflow/react": "^12.0.0",
     "dockerode": "^4.0.2",
     "next": "15.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.0",
