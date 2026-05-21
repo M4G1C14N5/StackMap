@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { Node, Edge } from '@xyflow/react';
 import Docker from 'dockerode';
 
-interface HomelabNodeData {
+interface HomelabNodeData extends Record<string, unknown> {
   label: string;
   image: string;
   status: 'online' | 'offline';
