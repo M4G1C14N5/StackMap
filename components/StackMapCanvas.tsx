@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   useNodesState,
@@ -11,9 +11,13 @@ import {
   Edge,
   Node,
 } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+// Removed flow style import here, moved to globals.css
+import StackMapNode from './StackMapNode';
 
-// We'll define a custom node component later, for now using default
+const nodeTypes = {
+  homelabNode: StackMapNode,
+};
+
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
@@ -26,11 +30,22 @@ export default function StackMapCanvas() {
     [setEdges],
   );
 
+  useEffect(() => {
+    fetch('/api/stackmap')
+      .then((res) => res.json())
+      .then((data: { nodes: Node[]; edges: Edge[] }) => {
+        setNodes(data.nodes);
+        setEdges(data.edges);
+      })
+      .catch((err) => console.error('Failed to fetch stackmap:', err));
+  }, [setNodes, setEdges]);
+
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

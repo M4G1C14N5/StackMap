@@ -106,8 +106,22 @@ async function generateHomelabGraph(
 }
 
 export async function GET() {
-    // Note: In production, you would need to securely instantiate the dockerode clients
-    // using environment-provided sockets or connections.
-    const mockData = await generateHomelabGraph([]);
-    return NextResponse.json(mockData);
+    const nodes = [
+        {
+            id: 'node-1',
+            type: 'homelabNode',
+            position: { x: 100, y: 100 },
+            data: {
+                label: 'Test Container',
+                image: 'nginx:latest',
+                status: 'online',
+                ports: [80, 443],
+                coolifyManaged: true,
+                server: 'claw-server',
+                visibility: 'public'
+            }
+        }
+    ];
+    const edges = [];
+    return NextResponse.json({ nodes, edges });
 }
