@@ -10,8 +10,9 @@ import {
   Connection,
   Edge,
   Node,
+  useReactFlow,
+  ReactFlowProvider,
 } from '@xyflow/react';
-// Removed flow style import here, moved to globals.css
 import StackMapNode from './StackMapNode';
 
 const nodeTypes = {
@@ -21,9 +22,10 @@ const nodeTypes = {
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
-export default function StackMapCanvas() {
+function StackMapContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { fitView } = useReactFlow();
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -33,27 +35,37 @@ export default function StackMapCanvas() {
   useEffect(() => {
     fetch('/api/stackmap')
       .then((res) => res.json())
-      .then((data: { nodes: Node[]; edges: Edge[] }) => {
+      .then((data: { nodes: any[]; edges: any[] }) => {
         setNodes(data.nodes);
         setEdges(data.edges);
+        // Delay fitView slightly to allow render
+        setTimeout(fitView, 100);
       })
       .catch((err) => console.error('Failed to fetch stackmap:', err));
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, fitView]);
 
   return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      fitView
+    >
+      <Background />
+      <Controls />
+    </ReactFlow>
+  );
+}
+
+export default function StackMapCanvas() {
+  return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
+      <ReactFlowProvider>
+        <StackMapContent />
+      </ReactFlowProvider>
     </div>
   );
 }
