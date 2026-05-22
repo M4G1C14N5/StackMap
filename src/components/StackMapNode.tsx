@@ -10,11 +10,13 @@ import {
 
 export interface HomelabNodeData {
   label: string;
-  image: string;
+  logo: string;
   status: 'online' | 'offline';
   visibility: 'public' | 'protected' | 'private';
-  server: 'claw-server' | 'camued-server';
+  server: string;
+  subflow: string;
   ports?: number[];
+  coolifyManaged?: boolean;
 }
 
 const StackMapNode = ({ data }: NodeProps) => {
@@ -52,36 +54,27 @@ const StackMapNode = ({ data }: NodeProps) => {
   const style = getVisibilityStyles();
 
   return (
-    <div className={`min-w-[220px] rounded-xl border ${style.border} ${style.bg} p-3 shadow-lg backdrop-blur-sm transition-all duration-300`}>
+    <div className={`w-[90px] h-[90px] rounded-xl border ${style.border} ${style.bg} p-1 shadow-lg backdrop-blur-sm transition-all duration-300 flex flex-col items-center justify-between`}>
       <Handle type="target" position={Position.Left} className="!bg-slate-700" />
       
-      {/* Header: Host & Status */}
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
-          <Server size={10} />
-          {nodeData.server}
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-          <div className={`relative flex h-2 w-2`}>
-            {nodeData.status === 'online' && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            )}
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${nodeData.status === 'online' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-          </div>
-          {nodeData.status.toUpperCase()}
+      {/* Header: Status */}
+      <div className="w-full flex justify-end">
+        <div className={`relative flex h-2 w-2`}>
+          {nodeData.status === 'online' && (
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          )}
+          <span className={`relative inline-flex rounded-full h-2 w-2 ${nodeData.status === 'online' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
         </div>
       </div>
 
-      {/* Body: Label & Image */}
-      <div className="mb-3">
-        <h3 className="text-sm font-semibold text-slate-100 truncate">{nodeData.label}</h3>
-        <p className="text-[10px] text-slate-500 truncate mt-0.5">{nodeData.image}</p>
+      {/* Body: Logo */}
+      <div className="flex-1 flex items-center justify-center -mt-2 bg-white/10 rounded-lg overflow-hidden w-[70px] h-[70px]">
+        <img src={nodeData.logo} alt={nodeData.label} className="w-[60px] h-[60px] object-contain" />
       </div>
 
-      {/* Footer: Visibility Badge */}
-      <div className={`flex items-center gap-1.5 text-[10px] ${style.text} font-medium`}>
-        {style.icon}
-        {style.badge}
+      {/* Footer: Name */}
+      <div className="w-full text-center">
+        <h3 className="text-[9px] font-semibold text-slate-100 truncate px-1">{nodeData.label}</h3>
       </div>
 
       <Handle type="source" position={Position.Right} className="!bg-slate-700" />
