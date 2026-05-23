@@ -42,13 +42,12 @@ function StackMapContent() {
           const parent = nodeInSubflow ? nodeInSubflow.data.parentSubflow : null;
 
           let x = 50;
-          // The groups are placed using index * 600.
-          // Slightly increase the spacing to 550px
           let y = 50 + (index * 550);
           let width = 750;
+          let height = 500;
 
           if (sfId === 'tom-laptop-subflow') {
-            x = 600; // Increased from 550 to add slight distance
+            x = 600;
             y = 50;
             width = 400;
           } else if (sfId === 'claw-server-subflow') {
@@ -60,7 +59,7 @@ function StackMapContent() {
             type: 'group',
             data: { label: label },
             position: { x, y },
-            style: { width, height: 500 },
+            style: { width, height: height },
             parentId: parent ? `group-${parent}` : undefined,
           };
         });

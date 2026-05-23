@@ -62,8 +62,12 @@
     if (normalized.includes('planka')) return LOGO_MAP['planka'];
     if (normalized.includes('portainer')) return LOGO_MAP['portainer'];
     if (normalized.includes('redis')) return LOGO_MAP['redis'];
-    if (normalized.includes('nextcloud')) return LOGO_MAP['nextcloud'];
-    if (normalized.includes('postgres') || normalized.includes('db')) return LOGO_MAP['postgres'];
+    if (normalized.includes('pluto')) return '/assets/pluto.png';
+    if (normalized.includes('epsilon')) return '/assets/epsilon.png';
+    if (normalized.includes('hercules')) return '/assets/hercules.png';
+    if (normalized.includes('vs code')) return '/assets/Visual_Studio_Code_1.35_icon.svg.png';
+    if (normalized.includes('wsl')) return '/assets/Logo_WSL.svg';
+    if (normalized.includes('discord')) return '/assets/discord-svgrepo-com.svg';
     return LOGO_MAP['default'];
   }
 
