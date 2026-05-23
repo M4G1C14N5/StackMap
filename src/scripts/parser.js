@@ -58,6 +58,7 @@ async function runParser() {
       const id = container.Id.substring(0, 12);
       const name = container.Names[0].replace('/', '');
       const labels = container.Labels || {};
+      console.log(`Processing ${name}, Labels:`, labels);
       const status = container.State === 'running' ? 'online' : 'offline';
       
       // Define rules here to keep it modular
@@ -66,14 +67,18 @@ async function runParser() {
         { visibility: 'private', subflowId: `${argv.serverId}-private` }
       ];
 
-      // Categorize:
+      // Use the resourceName for the label if available
+      const label = labels['coolify.serviceName'] || name;
       // If in VPLAN, subflow is determined by rules, else null (Global Canvas)
       let subflowId = null;
       let inVPlanNode = false;
 
+      // New: Check for Coolify visibility override
+      const coolifyVisibility = labels['coolify.resourceName'] ? 'public' : 'private';
+      const visibility = labels['stackmap.visibility'] || coolifyVisibility;
+
       if (inVPlan) {
         inVPlanNode = true;
-        const visibility = labels['stackmap.visibility'] || 'private';
         const rule = subflowRules.find(r => r.visibility === visibility);
         subflowId = rule ? rule.subflowId : `${argv.serverId}-private`;
       }
@@ -84,13 +89,14 @@ async function runParser() {
           id, label, image, status, coolify_service_hash, compose_project_name, proxy_domain_rule, subflow_id, in_vplan
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         ON CONFLICT (id) DO UPDATE SET
+          label = EXCLUDED.label,
           status = EXCLUDED.status,
           proxy_domain_rule = EXCLUDED.proxy_domain_rule,
           subflow_id = EXCLUDED.subflow_id,
           in_vplan = EXCLUDED.in_vplan;
       `, [
         id, 
-        name, 
+        label, 
         container.Image, 
         status,
         labels['coolify.serviceId'] || null,
