@@ -2,15 +2,8 @@ services:
   stackmap:
     build: .
     restart: always
-    ports:
-      - "3001:3000"
     environment:
       - NODE_ENV=production
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - stackmap-net
 
-networks:
-  stackmap-net:
-    driver: bridge
