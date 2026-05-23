@@ -14,7 +14,6 @@ import {
   ReactFlowProvider,
 } from '@xyflow/react';
 import StackMapNode from './StackMapNode';
-
 import SubflowGroup from './SubflowGroup';
 
 const nodeTypes = {
@@ -22,101 +21,100 @@ const nodeTypes = {
   group: SubflowGroup,
 };
 
-const initialNodes: Node[] = [];
-const initialEdges: Edge[] = [];
-
 function StackMapContent() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { fitView } = useReactFlow();
 
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  );
+  const onConnect = useCallback((params: Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
   useEffect(() => {
     fetch('/api/stackmap')
       .then((res) => res.json())
       .then((data: { nodes: any[]; edges: any[] }) => {
-        // Group nodes and inject subflow groups
         const nodes = data.nodes;
         const subflowNodes = nodes.filter(n => n.data.subflow && n.data.subflow !== 'Global Canvas');
-        const subflowIds = [...new Set(subflowNodes.map(n => n.data.subflowId))]; // Assuming API returns subflowId
+        const subflowIds = [...new Set(subflowNodes.map(n => n.data.subflowId))];
         
-        const groupNodes = subflowIds
-          .map((sfId, index) => {
-            const nodeInSubflow = subflowNodes.find(n => n.data.subflowId === sfId);
-            const parent = nodeInSubflow ? nodeInSubflow.data.parentSubflow : null;
+        const groupNodes = subflowIds.map((sfId, index) => {
+          const nodeInSubflow = subflowNodes.find(n => n.data.subflowId === sfId);
+          const label = nodeInSubflow ? nodeInSubflow.data.subflow : sfId;
+          const parent = nodeInSubflow ? nodeInSubflow.data.parentSubflow : null;
 
-            return {
-              id: `group-${sfId}`,
-              type: 'group',
-              data: { label: sfId },
-              // Offset groups by 600px vertically to prevent overlap
-              position: { x: 50, y: 50 + (index * 600) },
-              style: { width: 750, height: 500 },
-              parentId: parent ? `group-${parent}` : undefined,
-            };
-          });
+          let x = 50;
+          // The groups are placed using index * 600.
+          // Slightly increase the spacing to 550px
+          let y = 50 + (index * 550);
+          let width = 750;
 
-        const updatedNodes = subflowNodes.map((node, index) => {
-          const row = Math.floor(index / 6);
-          const col = index % 6;
+          if (sfId === 'tom-laptop-subflow') {
+            x = 600; // Increased from 550 to add slight distance
+            y = 50;
+            width = 400;
+          } else if (sfId === 'claw-server-subflow') {
+            width = 500;
+          }
+
+          return {
+            id: `group-${sfId}`,
+            type: 'group',
+            data: { label: label },
+            position: { x, y },
+            style: { width, height: 500 },
+            parentId: parent ? `group-${parent}` : undefined,
+          };
+        });
+
+        const updatedNodes = subflowNodes.map((node) => {
+          if (node.data.subflowId === 'claw-server-subflow') {
+            const isAgent = node.id.includes('node') && (node.data.label === 'Pluto' || node.data.label === 'Epsilon' || node.data.label === 'Hercules');
+            const isMC = node.data.label.includes('mission-control');
+            const mcNodes = subflowNodes.filter(n => n.data.subflowId === 'claw-server-subflow' && n.data.label.includes('mission-control'));
+            const agentNodes = subflowNodes.filter(n => n.data.subflowId === 'claw-server-subflow' && (n.data.label === 'Pluto' || n.data.label === 'Epsilon' || n.data.label === 'Hercules'));
+            if (isMC) {
+              const mcIndex = mcNodes.findIndex(n => n.id === node.id);
+              return { ...node, position: { x: 100, y: 100 + (mcIndex * 100) }, parentId: `group-${node.data.subflowId}`, extent: 'parent' };
+            }
+            if (isAgent) {
+              const agentIndex = agentNodes.findIndex(n => n.id === node.id);
+              return { ...node, position: { x: 300, y: 100 + (agentIndex * 100) }, parentId: `group-${node.data.subflowId}`, extent: 'parent' };
+            }
+          }
+          if (node.data.subflowId === 'tom-laptop-subflow') {
+            const laptopNodes = subflowNodes.filter(n => n.data.subflowId === 'tom-laptop-subflow');
+            const laptopIndex = laptopNodes.findIndex(n => n.id === node.id);
+            return { ...node, position: { x: 150, y: 100 + (laptopIndex * 100) }, parentId: `group-${node.data.subflowId}`, extent: 'parent' };
+          }
+          // Default logic for camued-server nodes (4x3 grid)
+          const camuedNodes = subflowNodes.filter(n => n.data.subflowId === 'camued-server');
+          const camuedIndex = camuedNodes.findIndex(n => n.id === node.id);
+          const row = Math.floor(camuedIndex / 4);
+          const col = camuedIndex % 4;
           return {
             ...node,
-            position: { x: 200 + (col * 100), y: 100 + (row * 100) },
+            position: { x: 50 + (2 * 110) + (col * 110), y: 50 + (row * 110) },
             parentId: `group-${node.data.subflowId}`,
             extent: 'parent',
           };
         });
 
-        // Add back global nodes (not in subflows)
-        const globalNodes = nodes.filter(n => !n.data.subflow || n.data.subflow === 'Global Canvas').map((node, index) => {
-          if (node.id === '32a8902669fd') {
-            return { ...node, position: { x: -400, y: 750 } };
-          }
-          if (node.id === 'c76b76a07b7a') {
-            return { ...node, position: { x: -400, y: 150 } };
-          }
-          if (node.id === 'cloudflare-dns') {
-            return { ...node, position: { x: -600, y: 450 } };
-          }
-          if (node.id === 'internet-node') {
-            return { ...node, position: { x: -800, y: 450 } };
-          }
+        const globalNodes = nodes.filter(n => !n.data.subflow || n.data.subflow === 'Global Canvas').map((node) => {
+          if (node.id === '32a8902669fd') return { ...node, position: { x: -500, y: 750 } };
+          if (node.id === 'c76b76a07b7a') return { ...node, position: { x: -500, y: 150 } };
+          if (node.id === 'cloudflare-dns') return { ...node, position: { x: -700, y: 450 } };
+          if (node.id === 'internet-node') return { ...node, position: { x: -900, y: 450 } };
           return node;
         });
 
         setNodes([...groupNodes, ...updatedNodes, ...globalNodes]);
         setEdges(data.edges);
         setTimeout(() => fitView({ duration: 500 }), 500);
-      })
-      .catch((err) => console.error('Failed to fetch stackmap:', err));
+      });
   }, [setNodes, setEdges, fitView]);
 
-  return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      fitView
-    >
-      <Background />
-      <Controls />
-    </ReactFlow>
-  );
+  return <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} fitView><Background /><Controls /></ReactFlow>;
 }
 
 export default function StackMapCanvas() {
-  return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <ReactFlowProvider>
-        <StackMapContent />
-      </ReactFlowProvider>
-    </div>
-  );
+  return <div style={{ width: '100vw', height: '100vh' }}><ReactFlowProvider><StackMapContent /></ReactFlowProvider></div>;
 }
